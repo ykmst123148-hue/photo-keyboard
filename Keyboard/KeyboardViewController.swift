@@ -37,13 +37,17 @@ final class KeyboardViewController: UIInputViewController {
 
         let d = fromDefaults.map { "OK \($0)" } ?? "NG"
         let f = fromFile.map { "OK \($0.trimmingCharacters(in: .whitespacesAndNewlines))" } ?? "NG"
-        statusLabel.text = "設定値: \(d) / ファイル: \(f)"
+        let container = SharedStore.containerURL != nil ? "OK" : "NG"
+        statusLabel.text = "グループ: \(SharedStore.groupID) 共有: \(container)\n設定値: \(d) / ファイル: \(f)"
     }
 
     // MARK: レイアウト
 
     private func buildLayout() {
-        statusLabel.font = .systemFont(ofSize: 11)
+        statusLabel.font = .systemFont(ofSize: 10)
+        statusLabel.numberOfLines = 2
+        statusLabel.adjustsFontSizeToFitWidth = true
+        statusLabel.minimumScaleFactor = 0.6
         statusLabel.textColor = .white
         statusLabel.textAlignment = .center
         statusLabel.backgroundColor = UIColor.black.withAlphaComponent(0.35)
@@ -88,7 +92,7 @@ final class KeyboardViewController: UIInputViewController {
             column.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -4),
             column.topAnchor.constraint(equalTo: view.topAnchor, constant: 6),
             column.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -6),
-            statusLabel.heightAnchor.constraint(equalToConstant: 18),
+            statusLabel.heightAnchor.constraint(equalToConstant: 28),
         ])
 
         // キー幅の制約は、全部のキーが画面に載ったあとで有効にする
@@ -98,7 +102,7 @@ final class KeyboardViewController: UIInputViewController {
             }
         }
 
-        let height = view.heightAnchor.constraint(equalToConstant: 260)
+        let height = view.heightAnchor.constraint(equalToConstant: 270)
         height.priority = .defaultHigh
         height.isActive = true
     }

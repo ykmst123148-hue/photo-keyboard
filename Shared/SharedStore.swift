@@ -3,7 +3,19 @@ import UIKit
 
 /// 本体アプリとキーボードの間で設定を受け渡す場所（App Group）
 enum SharedStore {
-    static let groupID = "group.com.kazphotokbd.shared"
+    /// ビルド時に指定したグループ名
+    static let defaultGroupID = "group.com.kazphotokbd.shared"
+
+    /// 実際に使うグループ名。署名に入っているもの、Info.plistに足されたもの、
+    /// ビルド時の名前の順に試し、共有フォルダが開けた最初のものを使う
+    static let groupID: String = {
+        let candidates = ProvisionInfo.profileAppGroups + ProvisionInfo.infoPlistGroups + [defaultGroupID]
+        for id in candidates where FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: id) != nil {
+            return id
+        }
+        return defaultGroupID
+    }()
+
     static let colorKey = "keyboardColorHex"
     static let colorFileName = "color.txt"
 

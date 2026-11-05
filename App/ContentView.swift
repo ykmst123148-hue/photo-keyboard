@@ -29,6 +29,15 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                 }
 
+                Section("診断（署名の情報）") {
+                    diagRow("署名ファイル", ProvisionInfo.hasProfile ? "あり" : "なし")
+                    diagRow("チームID", ProvisionInfo.teamID ?? "-")
+                    diagRow("アプリID", ProvisionInfo.applicationIdentifier ?? "-")
+                    diagRow("署名のグループ", list(ProvisionInfo.profileAppGroups))
+                    diagRow("Info.plistのグループ", list(ProvisionInfo.infoPlistGroups))
+                    diagRow("使っているグループ", SharedStore.groupID)
+                }
+
                 Section("キーボードの背景色") {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12) {
                         ForEach(swatches, id: \.hex) { item in
@@ -66,6 +75,17 @@ struct ContentView: View {
             }
             .navigationTitle("着せ替えキーボード")
         }
+    }
+
+    private func diagRow(_ title: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title).font(.caption).foregroundStyle(.secondary)
+            Text(value).font(.caption.monospaced()).textSelection(.enabled)
+        }
+    }
+
+    private func list(_ items: [String]) -> String {
+        items.isEmpty ? "なし" : items.joined(separator: "\n")
     }
 
     private func save(_ hex: String) {
