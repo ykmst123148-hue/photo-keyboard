@@ -1,0 +1,69 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      # ---- iPhone実機用（Sideloadlyで入れるIPA） ----
+      - name: Build for device (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild -project PhotoKeyboard.xcodeproj -scheme PhotoKeyboard \
+            -configuration Release -sdk iphoneos \
+            -derivedDataPath build/device \
+            CODE_SIGNING_ALLOWED=NO build | tail -n 40
+
+      - name: Embed entitlements and package IPA
+        run: |
+          APP=build/device/Build/Products/Release-iphoneos/PhotoKeyboard.app
+          # Sideloadlyが署名し直すときにApp Groupを引き継げるよう、仮の署名で権限情報を埋め込む
+          codesign -f -s - --entitlements Keyboard/Keyboard.entitlements "$APP/PlugIns/Keyboard.appex"
+          codesign -f -s - --entitlements App/PhotoKeyboard.entitlements "$APP"
+          echo "== app entitlements =="; codesign -d --entitlements - "$APP"
+          echo "== keyboard entitlements =="; codesign -d --entitlements - "$APP/PlugIns/Keyboard.appex"
+          mkdir -p out/Payload
+          cp -R "$APP" out/Payload/
+          (cd out && zip -qr PhotoKeyboard.ipa Payload)
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PhotoKeyboard-ipa
+          path: out/PhotoKeyboard.ipa
+
+      # ---- シミュレータで起動してスクショを撮る（動作の証拠） ----
+      - name: Build for simulator
+        run: |
+          set -o pipefail
+          xcodebuild -project PhotoKeyboard.xcodeproj -scheme PhotoKeyboard \
+            -configuration Debug -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/sim \
+            CODE_SIGNING_ALLOWED=NO build | tail -n 40
+          APP=build/sim/Build/Products/Debug-iphonesimulator/PhotoKeyboard.app
+          codesign -f -s - --entitlements Keyboard/Keyboard.entitlements "$APP/PlugIns/Keyboard.appex"
+          codesign -f -s - --entitlements App/PhotoKeyboard.entitlements "$APP"
+
+      - name: Launch on simulator and take screenshot
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          data = json.load(sys.stdin)["devices"]
+         %2
