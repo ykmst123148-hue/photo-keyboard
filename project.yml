@@ -1,0 +1,61 @@
+name: PhotoKeyboard
+options:
+  bundleIdPrefix: com.kazphotokbd
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+targets:
+  PhotoKeyboard:
+    type: application
+    platform: iOS
+    sources:
+      - App
+      - Shared
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: 着せ替えキーボード
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+    entitlements:
+      path: App/PhotoKeyboard.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.kazphotokbd.shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.kazphotokbd.app
+    dependencies:
+      - target: Keyboard
+  Keyboard:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Keyboard
+      - Shared
+    info:
+      path: Keyboard/Info.plist
+      properties:
+        CFBundleDisplayName: 着せ替えキーボード
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.keyboard-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).KeyboardViewController
+          NSExtensionAttributes:
+            IsASCIICapable: false
+            PrefersRightToLeft: false
+            PrimaryLanguage: en-US
+            RequestsOpenAccess: false
+    entitlements:
+      path: Keyboard/Keyboard.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.kazphotokbd.shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.kazphotokbd.app.keyboard
